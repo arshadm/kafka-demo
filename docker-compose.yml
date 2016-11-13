@@ -1,0 +1,81 @@
+version: '2'
+services:
+  graphite:
+    image: nickstenning/graphite
+    ports:
+      - "2003:2003"
+      - "8080:80"
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"
+  kafkaserver1:
+    build: ./kafka
+    image: arshadm/kafka
+    depends_on:
+      - zookeeper
+      - graphite
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: kafkaserver1
+      KAFKA_ADVERTISED_PORT: 9092
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
+      KAFKA_KAFKA_METRICS_REPORTERS: kafka.metrics.KafkaGraphiteMetricsReporter
+      KAFKA_KAFKA_GRAPHITE_METRICS_REPORTER_ENABLED: 'true'
+      KAFKA_KAFKA_GRAPHITE_METRICS_EXCLUDE_REGEX: '(doesnotexist)'
+      KAFKA_KAFKA_GRAPHITE_METRICS_HOST: graphite
+      KAFKA_KAFKA_GRAPHITE_METRICS_PORT: 2003
+  kafkaserver2:
+    image: arshadm/kafka
+    depends_on:
+      - zookeeper
+      - graphite
+    ports:
+      - "9093:9092"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: kafkaserver2
+      KAFKA_ADVERTISED_PORT: 9093
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
+      KAFKA_KAFKA_METRICS_REPORTERS: kafka.metrics.KafkaGraphiteMetricsReporter
+      KAFKA_KAFKA_GRAPHITE_METRICS_REPORTER_ENABLED: 'true'
+      KAFKA_KAFKA_GRAPHITE_METRICS_EXCLUDE_REGEX: '(doesnotexist)'
+      KAFKA_KAFKA_GRAPHITE_METRICS_HOST: graphite
+      KAFKA_KAFKA_GRAPHITE_METRICS_PORT: 2003
+  kafkaserver3:
+    image: arshadm/kafka
+    depends_on:
+      - zookeeper
+      - graphite
+    ports:
+      - "9094:9092"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: kafkaserver3
+      KAFKA_ADVERTISED_PORT: 9094
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
+      KAFKA_KAFKA_METRICS_REPORTERS: kafka.metrics.KafkaGraphiteMetricsReporter
+      KAFKA_KAFKA_GRAPHITE_METRICS_REPORTER_ENABLED: 'true'
+      KAFKA_KAFKA_GRAPHITE_METRICS_EXCLUDE_REGEX: '(doesnotexist)'
+      KAFKA_KAFKA_GRAPHITE_METRICS_HOST: graphite
+      KAFKA_KAFKA_GRAPHITE_METRICS_PORT: 2003
+  kafka-producer:
+    image: kafka-demo:1.0.0-SNAPSHOT
+    depends_on:
+      - zookeeper
+      - kafkaserver1
+      - kafkaserver2
+      - kafkaserver3
+    environment:
+      PRODUCER: "true"
+      ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_BROKERS: kafkaserver1:9092, kafkaserver2:9093, kafkaserver3:9094
+  kafka-consumer:
+    image: kafka-demo:1.0.0-SNAPSHOT
+    environment:
+      PRODUCER: "false"
+      ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_BROKERS: kafkaserver1:9092, kafkaserver2:9093, kafkaserver3:9094
+
